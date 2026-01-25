@@ -51,4 +51,10 @@ public class ConversionHistory {
     public void setRate(double rate) { this.rate = rate; }
 
     public LocalDateTime getTimestamp() { return timestamp; }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+    this.timestamp = timestamp;
 }
+
+}
+
