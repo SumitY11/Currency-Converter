@@ -4,6 +4,9 @@ import com.currency.backend.entity.ConversionHistory;
 import com.currency.backend.repository.ConversionHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.currency.backend.dto.ConversionRequest;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -19,6 +22,7 @@ public class CurrencyService {
 
     public CurrencyService(ConversionHistoryRepository repository) {
         this.repository = repository;
+
     }
 
     public ConversionHistory convert(
@@ -51,4 +55,18 @@ public class CurrencyService {
 
         return repository.save(history);
     }
+
+    public Page<ConversionHistory> getHistory(Pageable pageable) {
+    return repository.findAll(pageable);
+}
+
+public ConversionHistory convert(ConversionRequest request) {
+
+    String from = request.getFrom();
+    String to = request.getTo();
+    double amount = request.getAmount();
+
+    // existing logic
+    return convert(from, to, amount);
+}
 }
