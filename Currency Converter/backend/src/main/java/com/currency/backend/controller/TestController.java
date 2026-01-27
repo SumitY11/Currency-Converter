@@ -10,4 +10,10 @@ public class TestController {
     public String home() {
         return "All Good !!! Backend is running 🚀";
     }
+
+    // ✅ Public Health Endpoint
+    @GetMapping("/health")
+    public String health() {
+        return "Backend is running!";
+    }
 }
