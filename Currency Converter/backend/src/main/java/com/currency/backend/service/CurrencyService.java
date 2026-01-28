@@ -1,12 +1,12 @@
 package com.currency.backend.service;
 
+import com.currency.backend.dto.ConversionRequest;
 import com.currency.backend.entity.ConversionHistory;
 import com.currency.backend.repository.ConversionHistoryRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import com.currency.backend.dto.ConversionRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -22,29 +22,14 @@ public class CurrencyService {
 
     public CurrencyService(ConversionHistoryRepository repository) {
         this.repository = repository;
-
     }
 
-    public ConversionHistory convert(
-            String from,
-            String to,
-            double amount
-    ) {
+    // 🔹 MAIN CONVERSION
+    public ConversionHistory convert(String from, String to, double amount) {
 
-        // 1️⃣ Call external API
-        Map response = restTemplate.getForObject(
-                API_URL,
-                Map.class,
-                from
-        );
-
-        Map<String, Double> rates =
-                (Map<String, Double>) response.get("rates");
-
-        double rate = rates.get(to);
+        double rate = getConversionRate(from, to);
         double convertedAmount = amount * rate;
 
-        // 2️⃣ Save conversion
         ConversionHistory history = new ConversionHistory();
         history.setFromCurrency(from);
         history.setToCurrency(to);
@@ -56,17 +41,35 @@ public class CurrencyService {
         return repository.save(history);
     }
 
+    // 🔹 DTO VERSION
+    public ConversionHistory convert(ConversionRequest request) {
+        return convert(
+                request.getFrom(),
+                request.getTo(),
+                request.getAmount()
+        );
+    }
+
+    // 🔹 PAGINATED HISTORY
     public Page<ConversionHistory> getHistory(Pageable pageable) {
-    return repository.findAll(pageable);
-}
+        return repository.findAll(pageable);
+    }
 
-public ConversionHistory convert(ConversionRequest request) {
+    // 🔹 GET CONVERSION RATE FROM API
+    private double getConversionRate(String from, String to) {
+        // Call external API
+        Map<String, Object> response = restTemplate.getForObject(API_URL, Map.class, from);
 
-    String from = request.getFrom();
-    String to = request.getTo();
-    double amount = request.getAmount();
+        if (response == null || !response.containsKey("rates")) {
+            throw new RuntimeException("Failed to fetch conversion rates from API");
+        }
 
-    // existing logic
-    return convert(from, to, amount);
-}
+        Map<String, Double> rates = (Map<String, Double>) response.get("rates");
+
+        if (!rates.containsKey(to)) {
+            throw new RuntimeException("Target currency not found: " + to);
+        }
+
+        return rates.get(to);
+    }
 }
